@@ -16,7 +16,8 @@ async def process_remove_duplicates(
     processor: VideoProcessor = Depends(get_video_processor),
 ):
     # try:
-    if not request.file_id or not request.filename:
+    print('request.params', request.params)
+    if not request.file_id or not request.params['filename']:
         raise HTTPException(status_code=400, detail="Missing file information")
 
     task_id = str(uuid.uuid4())
@@ -156,6 +157,12 @@ async def execute_workflow(graph, state, processor):
             "current_step": state["current_step"],
             "total_steps": len(state["plan"])
         }
+
+    processor.active_tasks[state["task_id"]] = {
+        "status": "completed",
+        "status" : "processing complete"
+    }
+
     # except Exception as e:
     #     processor.active_tasks[state["task_id"]] = {
     #         "status": "failed",

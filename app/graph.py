@@ -37,10 +37,13 @@ Style Preference: {style_preference}
 Output Format: {output_format}
 
 Generate a JSON array of processing steps with 'name' and 'args'. 
-Use only these tools: remove_duplicates, add_captions, add_music, add_broll.
+Use only these tools: remove_duplicates, add_captions, add_music, add_broll, and style preferences if the user input specifically requests it.
+Only include steps that are directly requested in the user input.
 Order steps logically for video processing workflow.
 
 Example Response:
+User Input: Remove duplicates from the video and add captions of size 32 and background music at normal volume.
+Plan:
 [
     {{"name": "remove_duplicates", "args": {{}}}},
     {{"name": "add_captions", "args": {{"font_size": 32}}}},
@@ -123,7 +126,10 @@ def create_execute_node(processor):
         print(f"[execute_node] Entered with state: {state}")
         if state.get("error"):
             print(f"[execute_node] Error detected in state: {state['error']}")
-            return state
+            return {
+                **state,
+                "error": str(e)
+            }
             
         current_step = state["current_step"]
         step = state["plan"][current_step]

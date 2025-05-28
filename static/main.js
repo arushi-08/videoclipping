@@ -89,7 +89,7 @@ async function runRemoveDuplicates() {
             body: JSON.stringify({
                 file_id: currentFile.file_id,
                 params: {
-                    filaname: currentFile.filename,
+                    filename: currentFile.filename,
                     model: 'base',
                     dup_thresh: 0.85
                 }
@@ -280,7 +280,7 @@ function showOutputResult(data) {
     const downloadUrl = data.result.download_url.startsWith('/') 
         ? data.result.download_url 
         : `${API_BASE}/${data.result.download_url}`;
-
+    
     // Make sure the preview container is visible
     const previewContainer = document.getElementById('videoPreviewContainer');
     previewContainer.style.display = 'block';
@@ -325,8 +325,10 @@ async function runAiEdit() {
     }
 
     // Show spinner
-    document.getElementById('spinner-ai-edit').style.display = 'inline-block';
+    document.getElementById('processingSteps').style.display = 'block';
     document.getElementById('processingOverlay').classList.remove('d-none');
+    document.getElementById('spinner-remove-duplicates').style.display = 'inline-block';
+    
 
     try {
     // Kick off the AI‑driven pipeline
@@ -342,21 +344,22 @@ async function runAiEdit() {
         })
         });
         if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
-        const { data } = await res.json();
+        const data = await res.json();
 
     let task;
     do {
         await new Promise(r => setTimeout(r, 1000));
         const res = await fetch(`${API_BASE}/process/status/${data.task_id}`);
         task = await res.json();
-    } while (task.status === "processing");
+    } while (task.status !== "completed" && task.status !== "failed");
 
     if (task.status === "failed") {
         document.getElementById('processingOverlay').classList.add('d-none');
         document.getElementById('spinner-remove-duplicates').style.display = 'none';
+        document.getElementById('processingSteps').style.display = 'none';
         throw new Error(task.error);
     }
-
+    console.log('CHECK task', task);
     showOutputResult(task);
 
     showMessage('AI Edit pipeline completed!', 'success');
@@ -364,7 +367,8 @@ async function runAiEdit() {
         showMessage(`AI Edit failed 2: ${JSON.stringify(err.message)}`, 'danger');
     } finally {
         // hide spinner
-        document.getElementById('spinner-ai-edit').style.display = 'none';
         document.getElementById('processingOverlay').classList.add('d-none');
+        document.getElementById('spinner-remove-duplicates').style.display = 'none';
+        document.getElementById('processingSteps').style.display = 'none';
     }
 }

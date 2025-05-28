@@ -54,7 +54,7 @@ class AIEditRequest(BaseModel):
         max_length=100
     )
     style_preference: Optional[str] = Field(
-        "cinematic",
+        None,
         description="Preferred visual style for the edit",
         enum=["cinematic", "social-media", "documentary", "vlog"]
     )
@@ -69,7 +69,7 @@ class AIEditRequest(BaseModel):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_input": "Create a 30-second Instagram reel with dynamic captions and upbeat background music",
                 "file_id": "12345",

@@ -91,8 +91,8 @@ class VideoProcessor:
                     "status": "completed",
                     "result": {
                         **result_template,
-                        "output_filename": result['output_path'].name,
-                        "download_url": f"{result_template['download_url']}{result['output_path'].name}",
+                        "output_filename": Path(result['output_path']).name,
+                        "download_url": f"{result_template['download_url']}{Path(result['output_path']).name}",
                         'processing_steps': new_steps
                     }
                 }
@@ -142,7 +142,23 @@ class VideoProcessor:
                 str(output_path),
                 codec='libx264',
                 audio_codec='aac',
-                threads=4
+                threads=4,
+                write_logfile=True,
+                ffmpeg_params=[
+                    '-movflags', '+faststart',        # REQUIRED for web playback
+                    '-pix_fmt', 'yuv420p',           # REQUIRED for browser compatibility
+                    '-vsync', 'vfr',                 # Better for edited content
+                    '-x264-params', 'b-adapt=2',     # Keep adaptive B-frame decision
+                    '-crf', '23',                    # Quality/compression balance
+                    '-profile:v', 'main',           # Broad device compatibility
+                    '-level', '4.0',                # H.264 level for wide support
+                    '-b:a', '192k',                 # Keep your audio bitrate
+                    '-aq', '90'                     # Audio quality VBR
+                ],
+                preset='fast',
+                audio_fps=44100,
+                temp_audiofile=str(Path(output_path).with_suffix('.tmp.m4a')),
+                remove_temp=False  # Helps prevent premature file closure
             )
         segments_path = Path(settings.PROCESSED_DIR) / file_id / f"{input_path.stem}_segments.json"
         # segments_path.parent.mkdir(parents=True, exist_ok=True) 
@@ -163,6 +179,8 @@ class VideoProcessor:
         input_path = self.file_versions.get(file_id, {}).get('output_path')
         segments_path = self.file_versions.get(file_id, {}).get('segments_path')
         output_path = self.file_versions.get(file_id, {}).get('output_path')
+
+        temp_path = Path(output_path).with_suffix('.tmp.mp4')
 
         # Load video and segments
         video = VideoFileClip(str(input_path))
@@ -187,11 +205,29 @@ class VideoProcessor:
         final = CompositeVideoClip([video] + overlays)
         with final as final_clip:
             final_clip.write_videofile(
-                str(output_path),
+                str(temp_path),
                 codec='libx264',
                 audio_codec='aac',
-                threads=4
+                threads=4,
+                write_logfile=True,
+                ffmpeg_params=[
+                    '-movflags', '+faststart',        # REQUIRED for web playback
+                    '-pix_fmt', 'yuv420p',           # REQUIRED for browser compatibility
+                    '-vsync', 'vfr',                 # Better for edited content
+                    '-x264-params', 'b-adapt=2',     # Keep adaptive B-frame decision
+                    '-crf', '23',                    # Quality/compression balance
+                    '-profile:v', 'main',           # Broad device compatibility
+                    '-level', '4.0',                # H.264 level for wide support
+                    '-b:a', '192k',                 # Keep your audio bitrate
+                    '-aq', '90'                     # Audio quality VBR
+                ],
+                preset='fast',
+                audio_fps=44100,
+                temp_audiofile=str(Path(output_path).with_suffix('.tmp.m4a')),
+                remove_temp=False  # Helps prevent premature file closure
             )
+            os.replace(str(temp_path), str(output_path))
+
         return {
             'output_path': output_path,
             'processing_step': 'add_captions'
@@ -199,13 +235,13 @@ class VideoProcessor:
     
     @handle_processing('add_music')
     async def add_music(self, task_id: str, file_id: str, params: dict):
-        settings = self.settings
-    
         # Always use latest processed file or original
         input_path = self.file_versions.get(file_id, {}).get('output_path')
         
         output_path = self.file_versions.get(file_id, {}).get('output_path')
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        # output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        temp_path = Path(output_path).with_suffix('.tmp.mp4')
 
         # Get music file path (separate from versioned video files)
         music_path = Path(self.settings.MUSIC_UPLOAD_DIR) / params.get("music_file_id") / params.get("music_filename")
@@ -224,12 +260,29 @@ class VideoProcessor:
         
         with final as final_clip:
             final_clip.write_videofile(
-                str(output_path),
+                str(temp_path),
                 codec='libx264',
                 audio_codec='aac',
-                threads=4
+                threads=4,
+                write_logfile=True,
+                ffmpeg_params=[
+                    '-movflags', '+faststart',        # REQUIRED for web playback
+                    '-pix_fmt', 'yuv420p',           # REQUIRED for browser compatibility
+                    '-vsync', 'vfr',                 # Better for edited content
+                    '-x264-params', 'b-adapt=2',     # Keep adaptive B-frame decision
+                    '-crf', '23',                    # Quality/compression balance
+                    '-profile:v', 'main',           # Broad device compatibility
+                    '-level', '4.0',                # H.264 level for wide support
+                    '-b:a', '192k',                 # Keep your audio bitrate
+                    '-aq', '90'                     # Audio quality VBR
+                ],
+                preset='fast',
+                audio_fps=44100,
+                temp_audiofile=str(Path(output_path).with_suffix('.tmp.m4a')),
+                remove_temp=False  # Helps prevent premature file closure
             )
-        
+            os.replace(str(temp_path), str(output_path))
+
         return {
             'output_path': output_path,
             'processing_step': 'add_music'
@@ -240,6 +293,8 @@ class VideoProcessor:
 
         input_path = self.file_versions.get(file_id, {}).get('output_path')
         output_path = self.file_versions.get(file_id, {}).get('output_path')
+
+        temp_path = Path(output_path).with_suffix('.tmp.mp4')
 
         main_clip = VideoFileClip(str(input_path))
 
@@ -253,17 +308,28 @@ class VideoProcessor:
 
         with final_video as final_clip:
             final_clip.write_videofile(
-                str(output_path),
+                str(temp_path),
                 codec='libx264',
                 audio_codec='aac',
                 threads=4,
                 ffmpeg_params=[
-                    "-vsync", "cfr",
-                    "-r", "30",
-                    "-x264-params", "b-adapt=2:bframes=0",
-                    "-b:a", "192k"
-                ]
+                    '-movflags', '+faststart',        # REQUIRED for web playback
+                    '-pix_fmt', 'yuv420p',           # REQUIRED for browser compatibility
+                    '-vsync', 'vfr',                 # Better for edited content
+                    '-x264-params', 'b-adapt=2',     # Keep adaptive B-frame decision
+                    '-crf', '23',                    # Quality/compression balance
+                    '-profile:v', 'main',           # Broad device compatibility
+                    '-level', '4.0',                # H.264 level for wide support
+                    '-b:a', '192k',                 # Keep your audio bitrate
+                    '-aq', '90'                     # Audio quality VBR
+                ],
+                preset='fast',
+                audio_fps=44100,
+                temp_audiofile=str(Path(output_path).with_suffix('.tmp.m4a')),
+                remove_temp=False  # Helps prevent premature file closure
             )
+            os.replace(str(temp_path), str(output_path))
+
         return {
             'output_path': output_path,
             'processing_step': 'add_broll'

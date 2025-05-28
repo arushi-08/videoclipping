@@ -6,8 +6,13 @@ from app.services.video_processor import VideoProcessor
 def get_settings() -> Settings:
     return Settings()
 
+video_processor = None
+
 def get_video_processor() -> VideoProcessor:
-    return VideoProcessor(get_settings())
+    global video_processor
+    if not video_processor:
+        video_processor = VideoProcessor(get_settings())
+    return video_processor
 
 graph = None
 
