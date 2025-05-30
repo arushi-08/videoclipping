@@ -81,17 +81,20 @@ async function runRemoveDuplicates() {
     document.getElementById('processingOverlay').classList.remove('d-none');
     document.getElementById('spinner-remove-duplicates').style.display = 'inline-block';
     
+    let dupThreshRaw = document.getElementById('dupThreshInput').value;
+    let dupThresh = dupThreshRaw !== "" ? parseFloat(dupThreshRaw) : null;
+
 
     try {
-        const response = await fetch(`${API_BASE}/process/remove-duplicates`, {
+        console.log("Requesting:", `${API_BASE}/process/${currentFile.file_id}/remove-duplicates`);
+        const response = await fetch(`${API_BASE}/process/${currentFile.file_id}/remove-duplicates`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                file_id: currentFile.file_id,
                 params: {
                     filename: currentFile.filename,
                     model: 'base',
-                    dup_thresh: 0.85
+                    dedupe_threshold: dupThresh
                 }
             })
         });
@@ -102,7 +105,7 @@ async function runRemoveDuplicates() {
         let task;
         do {
             await new Promise(r => setTimeout(r, 1000));
-            const res = await fetch(`${API_BASE}/process/status/${data.task_id}`);
+            const res = await fetch(`${API_BASE}/process/${data.task_id}/status`);
             task = await res.json();
         } while (task.status === "processing");
 
@@ -129,11 +132,10 @@ async function addCaptions() {
     const fontSize = document.getElementById('input-font-size').value || 28;
     
     try {
-        const response = await fetch(`${API_BASE}/process/add-captions`, {
+        const response = await fetch(`${API_BASE}/process/${currentFile.file_id}/add-captions`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                file_id: currentFile.file_id,
                 params: { font_size: fontSize }
             })
         });
@@ -145,7 +147,7 @@ async function addCaptions() {
         let task;
         do {
             await new Promise(r => setTimeout(r, 1000));
-            const res = await fetch(`${API_BASE}/process/status/${data.task_id}`);
+            const res = await fetch(`${API_BASE}/process/${data.task_id}/status`);
             task = await res.json();
         } while (task.status === "processing");
 
@@ -184,11 +186,10 @@ async function addMusic() {
 
         musicData = await uploadFile(musicFileInput.files[0], 'music');
 
-        const response = await fetch(`${API_BASE}/process/music`, {
+        const response = await fetch(`${API_BASE}/process/${currentFile.file_id}/music`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                file_id: currentFile.file_id,
                 params: {
                     music_file_id: musicData.file_id,
                     music_filename: musicData.filename,
@@ -208,7 +209,7 @@ async function addMusic() {
         let task;
         do {
             await new Promise(r => setTimeout(r, 1000));
-            const res = await fetch(`${API_BASE}/process/status/${data.task_id}`);
+            const res = await fetch(`${API_BASE}/process/${data.task_id}/status`);
             task = await res.json();
         } while (task.status === "processing");
 
@@ -237,11 +238,10 @@ async function addBroll() {
     const keywords = document.getElementById('input-broll-keywords').value;
     
     try {
-        const response = await fetch(`${API_BASE}/process/broll`, {
+        const response = await fetch(`${API_BASE}/process/${currentFile.file_id}/broll`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                file_id: currentFile.file_id,
                 params: {
                     keywords: keywords.split(',').map(k => k.trim())
                 }
@@ -254,7 +254,7 @@ async function addBroll() {
         let task;
         do {
             await new Promise(r => setTimeout(r, 1000));
-            const res = await fetch(`${API_BASE}/process/status/${data.task_id}`);
+            const res = await fetch(`${API_BASE}/process/${data.task_id}/status`);
             task = await res.json();
         } while (task.status === "processing");
 

@@ -103,6 +103,18 @@
 
             <!-- REMOVE DUPLICATES -->
             <div class="mb-3 d-flex align-items-center" id="group-remove-duplicates">
+                <input 
+                    type="number" 
+                    id="dupThreshInput"
+                    class="form-control me-2"
+                    min="0.01"
+                    max="0.99"
+                    step="0.01"
+                    value="0.85"
+                    style="width: 80px;"
+                    title="Similarity threshold (0.01-0.99)"
+                >
+
             <button
                 id="btn-remove-duplicates"
                 class="btn btn-primary d-flex align-items-center"

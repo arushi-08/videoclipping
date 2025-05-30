@@ -3,21 +3,21 @@ import uuid
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from app.dependencies import get_graph, get_video_processor
-from app.models.processing import (AIEditRequest, BrollRequest, CaptionRequest,
-                                   MusicRequest, ProcessRequest)
+from app.models.processing import AIEditRequest, ProcessRequest
 from app.services.video_processor import VideoProcessor
 
 router = APIRouter()
 
-@router.post("/remove-duplicates")
+@router.post("/{file_id}/remove-duplicates")
 async def process_remove_duplicates(
+    file_id: str,
     request: ProcessRequest,
     background_tasks: BackgroundTasks,
     processor: VideoProcessor = Depends(get_video_processor),
 ):
     # try:
     print('request.params', request.params)
-    if not request.file_id or not request.params['filename']:
+    if not file_id or not request.params['filename']:
         raise HTTPException(status_code=400, detail="Missing file information")
 
     task_id = str(uuid.uuid4())
@@ -25,7 +25,7 @@ async def process_remove_duplicates(
     background_tasks.add_task(
         processor.process_remove_duplicates,
         task_id,
-        request.file_id,
+        file_id,
         request.params
     )
     
@@ -36,9 +36,10 @@ async def process_remove_duplicates(
     #         detail=f"Processing failed: {str(e)}"
     #     )
 
-@router.post("/add-captions")
+@router.post("/{file_id}/add-captions")
 async def process_add_captions(
-    request: CaptionRequest,
+    file_id: str,
+    request: ProcessRequest,
     background_tasks: BackgroundTasks,
     processor: VideoProcessor = Depends(get_video_processor),
 ):
@@ -49,7 +50,7 @@ async def process_add_captions(
     background_tasks.add_task(
         processor.add_captions,
         task_id,
-        request.file_id,
+        file_id,
         request.params
     )
     return {"task_id": task_id, "status": "processing_started"}
@@ -59,9 +60,10 @@ async def process_add_captions(
     #         detail=f"Captioning failed: {str(e)}"
     #     )
     
-@router.post("/music")
+@router.post("/{file_id}/music")
 async def add_music_endpoint(
-    request: MusicRequest,
+    file_id: str,
+    request: ProcessRequest,
     background_tasks: BackgroundTasks,
     processor: VideoProcessor = Depends(get_video_processor),
 ):
@@ -71,7 +73,7 @@ async def add_music_endpoint(
     background_tasks.add_task(
         processor.add_music,
         task_id,
-        request.file_id,
+        file_id,
         request.params
     )
     return {"task_id": task_id, "status": "processing_started"}
@@ -81,9 +83,10 @@ async def add_music_endpoint(
     #         detail=f"Adding music failed: {str(e)}"
     #     )
 
-@router.post("/broll")
+@router.post("/{file_id}/broll")
 async def add_broll_endpoint(
-    request: BrollRequest,
+    file_id: str,
+    request: ProcessRequest,
     background_tasks: BackgroundTasks,
     processor: VideoProcessor = Depends(get_video_processor)
 ):
@@ -93,7 +96,7 @@ async def add_broll_endpoint(
         background_tasks.add_task(
             processor.add_broll,
             task_id,
-            request.file_id,
+            file_id,
             request.params
         )
         return {"task_id": task_id, "status": "processing_started"}
@@ -104,7 +107,7 @@ async def add_broll_endpoint(
         )
 
 
-@router.get("/status/{task_id}")
+@router.get("/{task_id}/status")
 async def get_status(
     task_id: str,
     processor: VideoProcessor = Depends(get_video_processor)

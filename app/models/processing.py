@@ -4,22 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class ProcessRequest(BaseModel):
-    file_id: str
     params: dict = {}
-
-class CaptionRequest(BaseModel):
-    file_id: str
-    # font_size: int = 28
-    params : dict = {}
-
-class MusicRequest(BaseModel):
-    file_id: str
-    params: dict = {}
-
-class BrollRequest(BaseModel):
-    file_id: str
-    params: dict = {}
-
 
 class AIEditRequest(BaseModel):
     """Request model for AI-powered editing endpoint"""
