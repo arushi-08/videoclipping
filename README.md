@@ -7,9 +7,6 @@ Supports actions such as removing duplicates, adding captions, and overlaying mu
 
 [![Watch the video](https://img.youtube.com/vi/0Re9DLinMQc/hqdefault.jpg)](https://www.youtube.com/embed/0Re9DLinMQc)
 
-[<img src="https://img.youtube.com/vi/0Re9DLinMQc/hqdefault.jpg" width="600" height="300"
-/>](https://www.youtube.com/embed/0Re9DLinMQc)
-
 
 ## Features
 
