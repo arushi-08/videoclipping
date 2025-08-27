@@ -50,6 +50,16 @@ Supports actions such as removing duplicates, adding captions, and overlaying mu
     pip install -r requirements.txt
     ```
 
+3. **Set up environment variables**
+    Create a `.env` file in the project root with your API keys:
+    ```
+    API_KEY=your_actual_api_key_here
+    BASE_URL=https://api.deepseek.com
+    MODEL_NAME=deepseek-chat
+    ```
+    
+    **Note:** Never commit your `.env` file to version control. The `.gitignore` file is configured to exclude it.
+
 ### Running the Application
 
 1. **Start the backend server**

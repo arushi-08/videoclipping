@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     WHISPER_MODEL: str = "base"
     DEFAULT_DUP_THRESH: float = 0.85
     DEFAULT_FONT_SIZE: int = 28
-    API_KEY: str = "sk-ADD YOUR KEY"
+    API_KEY: str = ""  # Set via environment variable
     BASE_URL: str = "https://api.deepseek.com"
     MODEL_NAME: str = "deepseek-chat"
     
