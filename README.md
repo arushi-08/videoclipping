@@ -127,36 +127,31 @@ python app/main.py
 
 ## 🚀 Deployment
 
-### Option 1: Deploy to Railway (Recommended)
+### Deploy to Render (Recommended - Free)
 
 1. **Fork this repository** to your GitHub account
 
-2. **Sign up for Railway** at [railway.app](https://railway.app)
+2. **Sign up for Render** at [render.com](https://render.com)
 
-3. **Connect your GitHub repository** to Railway
+3. **Create a new Web Service**:
+   - Click "New" → "Web Service"
+   - Connect your GitHub repository
+   - Choose the repository you forked
 
-4. **Set up environment variables** in Railway:
+4. **Configure the service**:
+   - **Name**: `video-editor` (or your preferred name)
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+5. **Set environment variables** in Render dashboard:
    - `API_KEY`: Your API key
    - `BASE_URL`: Your API base URL
    - `MODEL_NAME`: Your model name
 
-5. **Deploy automatically** - Railway will deploy on every push to main
+6. **Deploy** - Render will automatically deploy your application
 
-### Option 2: Deploy to Render
-
-1. **Sign up for Render** at [render.com](https://render.com)
-
-2. **Create a new Web Service**
-
-3. **Connect your GitHub repository**
-
-4. **Configure the service:**
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-
-5. **Set environment variables** in Render dashboard
-
-### Option 3: Deploy to Heroku
+### Alternative: Deploy to Heroku
 
 1. **Sign up for Heroku** at [heroku.com](https://heroku.com)
 
@@ -182,9 +177,14 @@ python app/main.py
 ## 🌐 Live Demo
 
 Once deployed, your application will be available at:
-- **Railway**: `https://your-app-name.railway.app`
 - **Render**: `https://your-app-name.onrender.com`
 - **Heroku**: `https://your-app-name.herokuapp.com`
+
+**Note**: Render's free tier includes:
+- 750 hours/month of runtime
+- Automatic sleep after 15 minutes of inactivity
+- 512 MB RAM
+- Shared CPU
 
 ---
 

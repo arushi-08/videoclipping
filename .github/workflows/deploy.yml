@@ -1,4 +1,4 @@
-name: Deploy to Railway
+name: Deploy to Render
 
 on:
   push:
@@ -28,8 +28,8 @@ jobs:
         # Add any tests here if you have them
         echo "No tests configured yet"
     
-    - name: Deploy to Railway
-      uses: bervProject/railway-deploy@v1.0.0
+    - name: Deploy to Render
+      uses: johnbeynon/render-deploy@v1.0.0
       with:
-        railway_token: ${{ secrets.RAILWAY_TOKEN }}
-        service: ${{ secrets.RAILWAY_SERVICE }}
+        service_id: ${{ secrets.RENDER_SERVICE_ID }}
+        api_key: ${{ secrets.RENDER_API_KEY }}
