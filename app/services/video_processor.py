@@ -120,6 +120,9 @@ class VideoProcessor:
         input_path = Path(settings.UPLOAD_DIR) / file_id / params.get('filename')
         output_path = Path(settings.PROCESSED_DIR) / file_id
         output_path.mkdir(parents=True, exist_ok=True)
+        dedupe_threshold = params.get('dedupe_threshold', settings.DEFAULT_DUP_THRESH)
+        if not dedupe_threshold:
+            dedupe_threshold = settings.DEFAULT_DUP_THRESH
 
         segments = self.transcribe_video(input_path).get('segments', [])
 
@@ -127,12 +130,39 @@ class VideoProcessor:
             None,
             self.remove_adjacent_duplicates,
             segments,
-            settings.DEFAULT_DUP_THRESH
+            dedupe_threshold
         )
 
         video = VideoFileClip(str(input_path))
         clips = [video.subclip(s['start'], s['end']) for s in filtered_segments]
-        cleaned = concatenate_videoclips(clips) if clips else ColorClip((640, 480), color=(0,0,0), duration=0)
+
+        # clips = []
+
+        # for i, s in enumerate(filtered_segments):
+        #     # Default padding
+        #     pad_before = 0.2
+        #     pad_after = 0.3
+
+        #     # Adjust padding based on next segment
+        #     if i < len(filtered_segments) - 1:
+        #         next_start = filtered_segments[i + 1]['start']
+        #         gap = next_start - s['end']
+        #         # Reduce padding if segments are close
+        #         if gap < 0.5:
+        #             pad_after = min(pad_after, gap / 2)
+        #     start = max(0, s['start'] - pad_before)
+        #     end = s['end'] + pad_after
+        #     # Ensure end does not exceed video duration
+        #     if i == len(filtered_segments) - 1:
+        #         end = min(end, video.duration)
+
+        #     clips.append(video.subclip(start, end))
+        # print('clips', clips)
+        if clips:
+            # clips = [clips[0]]+[clip.crossfadein(0.05) for clip in clips[1:]]
+            cleaned = concatenate_videoclips(clips, method="compose", padding=-0.005)
+        else:
+            cleaned = ColorClip((640, 480), color=(0,0,0), duration=0)
 
         output_path = Path(settings.PROCESSED_DIR) / file_id / f"processed_{input_path.stem}.mp4"
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -174,11 +204,30 @@ class VideoProcessor:
 
     @handle_processing('add_captions')
     async def add_captions(self, task_id:str, file_id: str, params: dict):
-    
-        # Always use latest processed file or original
-        input_path = self.file_versions.get(file_id, {}).get('output_path')
-        segments_path = self.file_versions.get(file_id, {}).get('segments_path')
-        output_path = self.file_versions.get(file_id, {}).get('output_path')
+        # Get input path - use processed file if available, otherwise use original uploaded file
+        cached = self.file_versions.get(file_id, {})
+        input_path = cached.get('output_path')
+        segments_path = cached.get('segments_path')
+        
+        if not input_path:
+            # No processed file yet, use original uploaded file
+            input_path = Path(self.settings.UPLOAD_DIR) / file_id / params.get('filename')
+            if not input_path.exists():
+                raise FileNotFoundError(f"Input video file not found: {input_path}")
+            
+            # Generate segments for original video
+            transcript = self.transcribe_video(str(input_path))
+            segments = transcript.get('segments', [])
+            
+            # Save segments to file
+            segments_path = Path(self.settings.PROCESSED_DIR) / file_id / "segments.json"
+            segments_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(segments_path, 'w') as f:
+                json.dump(segments, f)
+        
+        # Set output path in processed directory
+        output_path = Path(self.settings.PROCESSED_DIR) / file_id / f"processed_{params.get('filename')}"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
         temp_path = Path(output_path).with_suffix('.tmp.mp4')
 
@@ -229,35 +278,98 @@ class VideoProcessor:
             os.replace(str(temp_path), str(output_path))
 
         return {
-            'output_path': output_path,
+            'output_path': str(output_path),
+            'segments_path': str(segments_path),
             'processing_step': 'add_captions'
         }
     
     @handle_processing('add_music')
     async def add_music(self, task_id: str, file_id: str, params: dict):
-        # Always use latest processed file or original
-        input_path = self.file_versions.get(file_id, {}).get('output_path')
+        print(f"=== ADD MUSIC FUNCTION STARTED ===")
+        print(f"Task ID: {task_id}")
+        print(f"File ID: {file_id}")
+        print(f"Params: {params}")
         
-        output_path = self.file_versions.get(file_id, {}).get('output_path')
-        # output_path.parent.mkdir(parents=True, exist_ok=True)
+        # Get input path - use processed file if available, otherwise use original uploaded file
+        cached = self.file_versions.get(file_id, {})
+        input_path = cached.get('output_path')
+        
+        print(f"Cached file versions: {cached}")
+        print(f"Input path from cache: {input_path}")
+        
+        if not input_path:
+            # No processed file yet, use original uploaded file
+            filename = params.get('filename')
+            print(f"Filename from params: {filename}")
+            
+            if not filename:
+                raise ValueError("Filename parameter is required but not provided")
+                
+            input_path = Path(self.settings.UPLOAD_DIR) / file_id / filename
+            print(f"Constructed input path: {input_path}")
+            
+            if not input_path.exists():
+                raise FileNotFoundError(f"Input video file not found: {input_path}")
+        
+        # Set output path in processed directory
+        filename = params.get('filename', 'processed_video.mp4')
+        output_path = Path(self.settings.PROCESSED_DIR) / file_id / f"processed_{filename}"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        print(f"Output path: {output_path}")
 
         temp_path = Path(output_path).with_suffix('.tmp.mp4')
 
         # Get music file path (separate from versioned video files)
-        music_path = Path(self.settings.MUSIC_UPLOAD_DIR) / params.get("music_file_id") / params.get("music_filename")
+        music_file_id = params.get("music_file_id")
+        music_filename = params.get("music_filename")
         
+        print(f"Music file ID: {music_file_id}")
+        print(f"Music filename: {music_filename}")
+        
+        if not music_file_id or not music_filename:
+            raise ValueError("Music file ID and filename are required")
+            
+        music_path = Path(self.settings.MUSIC_UPLOAD_DIR) / music_file_id / music_filename
+        
+        print(f"Music path: {music_path}")
+        
+        if not music_path.exists():
+            raise FileNotFoundError(f"Music file not found: {music_path}")
         
         # Actual unique processing logic
+        print("Loading video file...")
         video = VideoFileClip(str(input_path))
-        music = (
-            AudioFileClip(str(music_path) )
-            .fx(audio_loop, duration=video.duration)
-            .fx(volumex, params.get("music_volume"))
-        )
+        print(f"Video loaded, duration: {video.duration}")
         
+        print("Loading music file...")
+        music = AudioFileClip(str(music_path))
+        print(f"Music loaded, duration: {music.duration}")
+        
+        # Apply audio loop
+        try:
+            music = music.fx(audio_loop, duration=video.duration)
+            print(f"Music after loop, duration: {music.duration}")
+        except Exception as e:
+            print(f"Error applying audio loop: {e}")
+            print("Continuing without audio loop")
+        
+        # Apply volume effect with error handling
+        try:
+            volume_factor = float(params.get("music_volume", 0.3))
+            music = music.fx(volumex, volume_factor)
+            print("Music volume applied successfully")
+        except Exception as e:
+            print(f"Error applying volume effect: {e}")
+            print("Continuing without volume adjustment")
+        
+        print("Music loaded and processed")
+        
+        print("Creating composite audio...")
         composite_audio = CompositeAudioClip([video.audio, music.set_start(0)])
         final = video.set_audio(composite_audio)
         
+        print("Writing final video...")
         with final as final_clip:
             final_clip.write_videofile(
                 str(temp_path),
@@ -283,16 +395,29 @@ class VideoProcessor:
             )
             os.replace(str(temp_path), str(output_path))
 
+        print(f"=== ADD MUSIC FUNCTION COMPLETED ===")
+        print(f"Output file: {output_path}")
+
         return {
-            'output_path': output_path,
+            'output_path': str(output_path),
             'processing_step': 'add_music'
         }
 
     @handle_processing('add_broll')
     async def add_broll(self, task_id: str, file_id: str, params: dict):
-
-        input_path = self.file_versions.get(file_id, {}).get('output_path')
-        output_path = self.file_versions.get(file_id, {}).get('output_path')
+        # Get input path - use processed file if available, otherwise use original uploaded file
+        cached = self.file_versions.get(file_id, {})
+        input_path = cached.get('output_path')
+        
+        if not input_path:
+            # No processed file yet, use original uploaded file
+            input_path = Path(self.settings.UPLOAD_DIR) / file_id / params.get('filename')
+            if not input_path.exists():
+                raise FileNotFoundError(f"Input video file not found: {input_path}")
+        
+        # Set output path in processed directory
+        output_path = Path(self.settings.PROCESSED_DIR) / file_id / f"processed_{params.get('filename')}"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
         temp_path = Path(output_path).with_suffix('.tmp.mp4')
 
@@ -302,8 +427,8 @@ class VideoProcessor:
 
         final_video = self.smart_broll_insertion(
             main_clip,
-            transcript['segments'],
-            params['keywords'].split(',')
+            transcript,
+            params['keywords']
         )
 
         with final_video as final_clip:
@@ -331,42 +456,10 @@ class VideoProcessor:
             os.replace(str(temp_path), str(output_path))
 
         return {
-            'output_path': output_path,
+            'output_path': str(output_path),
             'processing_step': 'add_broll'
         }
     
-
-    # Helper methods from original logic
-    def is_duplicate(self, a: str, b: str, threshold: float) -> bool:
-        """Check for either:
-        1. High similarity ratio, OR
-        2. One phrase starts with the other (with minimum overlap)
-        """
-        norm_a, norm_b = self.normalize(a), self.normalize(b)
-        
-        # Calculate base similarity
-        base_ratio = SequenceMatcher(None, norm_a, norm_b).ratio()
-        if base_ratio >= threshold:
-            return True
-        
-        # Check for prefix/suffix overlap
-        min_len = min(len(norm_a), len(norm_b))
-        overlap_threshold = 0.8  # 80% of shorter phrase must match
-        
-        # Find maximum matching prefix
-        prefix_length = 0
-        for a_char, b_char in zip(norm_a, norm_b):
-            if a_char == b_char:
-                prefix_length += 1
-            else:
-                break
-        
-        # Check if prefix match meets overlap criteria
-        if prefix_length / min_len >= overlap_threshold:
-            return True
-        
-        return False
-
     def remove_adjacent_duplicates(self, segments, dup_threshold):
         """Keep last segment in duplicate groups for natural flow"""
         kept = []
@@ -403,6 +496,7 @@ class VideoProcessor:
         1. High similarity ratio, OR
         2. One phrase starts with the other (with minimum overlap)
         """
+        print('CHECK dedupe threshold', threshold)
         norm_a, norm_b = self.normalize(a), self.normalize(b)
         
         # Calculate base similarity

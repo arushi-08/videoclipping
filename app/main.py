@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi_mcp import FastApiMCP
 from starlette.middleware.cors import CORSMiddleware
 
 from app.config import Settings
@@ -59,6 +60,9 @@ def create_app(settings: Settings) -> FastAPI:
     @app.get('/favicon.ico')
     async def get_favicon():
         return FileResponse("static/empty_favicon.ico")
+
+    # mcp = FastApiMCP(app)
+    # mcp.mount()
 
     return app
 

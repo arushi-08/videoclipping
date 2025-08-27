@@ -1,321 +1,717 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Video Processing Studio</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
-
-    <style>
-    /* Make the preview container never exceed the screen width,
-        and cap its height to the viewport minus your header/control bars */
-    #videoPreviewContainer {
-        max-width: 100%;
-        margin: auto;
-    }
-    #videoPreviewContainer video {
-        width: 100%;               /* full width of its container */
-        height: auto;              /* preserve aspect ratio */
-        max-height: calc(100vh - 200px); /* adjust 200px for padding/controls */
-        object-fit: contain;       /* letterbox if needed */
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeClipping Pro - AI-Powered Video Editor</title>
     
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary-color: #f8fafc;
+            --accent-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
 
-    .custom-slider {
-        height: 6px;
-        background: #dee2e6;
-        border-radius: 5px;
-    }
+        * {
+            font-family: 'Inter', sans-serif;
+        }
 
-    .custom-slider::-webkit-slider-thumb {
-        width: 18px;
-        height: 18px;
-        background: #0d6efd;
-        border: none;
-        margin-top: -6px;
-    }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
 
-    .custom-slider::-moz-range-thumb {
-        width: 18px;
-        height: 18px;
-        background: #0d6efd;
-        border: none;
-    }
-</style>
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            margin: 2rem auto;
+            overflow: hidden;
+        }
 
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .content-area {
+            padding: 2rem;
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: var(--secondary-color);
+            cursor: pointer;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .upload-zone.compact {
+            padding: 1rem;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            max-width: 400px;
+        }
+
+        .upload-zone.compact .upload-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-zone.compact h5 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-zone.compact p {
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-zone.compact .btn {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .video-header {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .main-video-container {
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-video-player {
+            width: 100%;
+            height: auto;
+            max-height: 600px;
+            object-fit: contain;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary-color);
+            background: #f0f9ff;
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--primary-color);
+            background: #f0f9ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary-custom {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary-custom:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        .btn-success-custom {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-warning-custom {
+            background: linear-gradient(135deg, var(--warning-color), #d97706);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-warning-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-control-custom {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control-custom:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .video-preview {
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .video-preview video {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+        }
+
+        .processing-overlay {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+        }
+
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke: var(--primary-color);
+            stroke-width: 4;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .ai-prompt-area {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 2px solid #bae6fd;
+        }
+
+        .volume-slider {
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .alert-custom {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+
+        .step.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+            font-weight: 600;
+        }
+
+        .step.active .step-number {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .step-divider {
+            flex: 1;
+            height: 2px;
+            background: var(--border-color);
+            margin: 0 1rem;
+        }
+
+        .action-buttons {
+            background: var(--secondary-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--border-color);
+        }
+
+        .edit-history {
+            background: #fef3c7;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 2px solid #fbbf24;
+        }
+
+        .edit-history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 1rem;
+                border-radius: 16px;
+            }
+            
+            .content-area {
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 1.5rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="mb-4">Video Processing Studio</h1>
-        
-        <!-- File Upload Section -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">1. Upload Video</h5>
-                <input type="file" id="videoUpload" accept="video/*" class="form-control">
-                <div id="uploadStatus" class="mt-2"></div>
-                
-                <!-- Preview player (starts hidden) -->
-                <div id="videoPreviewContainer" class="mt-3" style="display: none;">
-                <h6>Preview</h6>
-                <video id="videoPlayer" controls width="100%">
-                    Your browser does not support the video element.
-                </video>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="bi bi-camera-video-fill me-3"></i>VibeClipping Pro</h1>
+                <p>AI-Powered Video Editing Studio</p>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Step Indicators -->
+                <div class="step-indicator">
+                    <div class="step active" id="step-1">
+                        <div class="step-number">1</div>
+                        <span>Upload Video</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-2">
+                        <div class="step-number">2</div>
+                        <span>Edit & Process</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-3">
+                        <div class="step-number">3</div>
+                        <span>Download</span>
+                    </div>
+                </div>
+
+                <!-- Video Header Section -->
+                <div class="row mb-4" id="videoHeaderSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="video-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1"><i class="bi bi-camera-video me-2"></i>Current Video</h5>
+                                    <p class="text-muted mb-0" id="currentVideoName">No video uploaded</p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button id="btn-change-video" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-arrow-repeat me-2"></i>Change Video
+                                    </button>
+                                    <button id="btn-download-header" class="btn btn-success btn-sm" disabled>
+                                        <i class="bi bi-download me-2"></i>Download
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div class="row mb-4" id="uploadSection">
+                    <div class="col-12">
+                        <div class="upload-zone" id="uploadZone">
+                            <div class="upload-icon">
+                                <i class="bi bi-cloud-upload"></i>
+                            </div>
+                            <h5 class="mb-2">Upload Your Video</h5>
+                            <p class="text-muted mb-3 small">Drag and drop your video file here or click to browse</p>
+                            <input type="file" id="videoUpload" accept="video/*" class="d-none">
+                            <button class="btn btn-primary-custom btn-sm" onclick="document.getElementById('videoUpload').click()">
+                                <i class="bi bi-folder2-open me-2"></i>Choose File
+                            </button>
+                            <div id="uploadStatus" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Video Display -->
+                <div class="row mb-4" id="mainVideoSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="main-video-container">
+                            <video id="videoPlayer" controls class="main-video-player">
+                                Your browser does not support the video element.
+                            </video>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons Section -->
+                <div class="row mb-4" id="actionButtonsSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="action-buttons">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h5 class="mb-3"><i class="bi bi-arrow-clockwise me-2"></i>Quick Actions</h5>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <button id="btn-undo" class="btn btn-warning-custom me-2" disabled>
+                                        <i class="bi bi-arrow-counterclockwise me-2"></i>Undo Last Edit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit History Section -->
+                <div class="row mb-4" id="editHistorySection" style="display: none;">
+                    <div class="col-12">
+                        <div class="edit-history">
+                            <h6 class="mb-3"><i class="bi bi-clock-history me-2"></i>Edit History</h6>
+                            <div id="editHistoryList">
+                                <!-- Edit history items will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing Options -->
+                <div class="row" id="processingSteps" style="display: none;">
+                    <div class="col-12">
+                        <!-- Edit Interface Header -->
+                        <!-- <div class="mb-4 p-3 bg-light rounded-3 border-start border-4 border-primary">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-pencil-square text-primary fs-4 me-3"></i>
+                                <div>
+                                    <h5 class="mb-1 text-primary">Editing Interface</h5>
+                                </div>
+                            </div>
+                        </div> -->
+
+                        <!-- AI Assistant Section -->
+                        <div class="ai-prompt-area mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="feature-icon">
+                                    <i class="bi bi-robot"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">AI Assistant</h5>
+                                    <p class="text-muted mb-0">Let AI handle your editing with natural language instructions</p>
+                                </div>
+                            </div>
+                            <textarea
+                                id="input-ai-prompt"
+                                class="form-control form-control-custom mb-3"
+                                rows="3"
+                                placeholder="Describe what you want to do with your video... (e.g., 'Add background music at 30% volume, then add captions with size 28 font')"
+                            ></textarea>
+                            <button
+                                id="btn-ai-edit"
+                                class="btn btn-primary-custom"
+                            >
+                                <i class="bi bi-magic me-2"></i>Run AI Edit
+                            </button>
+                        </div>
+
+                        <!-- Manual Tools -->
+                        <div class="row">
+                            <div class="col-lg-6 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-scissors"></i>
+                                    </div>
+                                    <h6>Remove Duplicates</h6>
+                                    <p class="text-muted small mb-3">Automatically detect and remove duplicate frames</p>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <label class="form-label me-2 mb-0">Threshold:</label>
+                                        <input 
+                                            type="number" 
+                                            id="dupThreshInput"
+                                            class="form-control form-control-custom"
+                                            min="0.01"
+                                            max="0.99"
+                                            step="0.01"
+                                            value="0.85"
+                                            style="width: 100px;"
+                                        >
+                                    </div>
+                                    <button
+                                        id="btn-remove-duplicates"
+                                        class="btn btn-secondary-custom w-100"
+                                    >
+                                        <i class="bi bi-play-circle me-2"></i>Remove Duplicates
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-type"></i>
+                                    </div>
+                                    <h6>Add Captions</h6>
+                                    <p class="text-muted small mb-3">Automatically generate and add captions to your video</p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Font Size</label>
+                                        <input
+                                            type="number"
+                                            id="input-font-size"
+                                            placeholder="28"
+                                            class="form-control form-control-custom"
+                                        >
+                                    </div>
+                                    <button
+                                        id="btn-add-captions"
+                                        class="btn btn-secondary-custom w-100"
+                                    >
+                                        <i class="bi bi-play-circle me-2"></i>Add Captions
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-music-note-beamed"></i>
+                                    </div>
+                                    <h6>Background Music</h6>
+                                    <p class="text-muted small mb-3">Add background music to enhance your video</p>
+                                    <input
+                                        type="file"
+                                        id="input-music-file"
+                                        accept="audio/mpeg"
+                                        class="form-control form-control-custom mb-3"
+                                    />
+                                    <div class="mb-3">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>Volume</span>
+                                            <span id="volume-value" class="text-muted">30%</span>
+                                        </label>
+                                        <input
+                                            type="range"
+                                            id="input-music-volume"
+                                            min="0"
+                                            max="1"
+                                            step="0.1"
+                                            value="0.3"
+                                            class="volume-slider w-100"
+                                        />
+                                    </div>
+                                    <button
+                                        id="btn-add-music"
+                                        class="btn btn-secondary-custom w-100"
+                                    >
+                                        <i class="bi bi-play-circle me-2"></i>Add Music
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-collection-play"></i>
+                                    </div>
+                                    <h6>Add B-roll</h6>
+                                    <p class="text-muted small mb-3">Insert relevant B-roll footage based on keywords</p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Keywords</label>
+                                        <input
+                                            type="text"
+                                            id="input-broll-keywords"
+                                            placeholder="nature, technology, people"
+                                            class="form-control form-control-custom"
+                                        >
+                                    </div>
+                                    <button
+                                        id="btn-add-broll"
+                                        class="btn btn-secondary-custom w-100"
+                                    >
+                                        <i class="bi bi-play-circle me-2"></i>Add B-roll
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Output Section -->
+                        <div id="outputSection" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Processing Overlay -->
+                <div
+                    id="processingOverlay"
+                    class="processing-overlay position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center d-none"
+                    style="z-index: 1050;"
+                >
+                    <div class="text-center">
+                        <div class="progress-ring mb-3">
+                            <svg width="60" height="60">
+                                <circle cx="30" cy="30" r="26" stroke="#e2e8f0" stroke-width="4"/>
+                                <circle cx="30" cy="30" r="26" stroke="#6366f1" stroke-width="4" stroke-dasharray="163" stroke-dashoffset="0">
+                                    <animate attributeName="stroke-dashoffset" values="163;0;163" dur="2s" repeatCount="indefinite"/>
+                                </circle>
+                            </svg>
+                        </div>
+                        <h5 class="text-primary mb-2">Processing Your Video</h5>
+                        <p class="text-muted">This may take a few minutes...</p>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Processing Steps -->
-        <div class="card mb-4 position-relative" id="processingSteps" style="display: none;">
-        <div
-            id="processingOverlay"
-            class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center"
-            style="background: rgba(255,255,255,0.85); z-index: 1000;"
-            >
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Processing…</span>
-            </div>
-            <div class="mt-3 fs-5 text-primary">Processing video, please wait…</div>
-        </div>
-        </div>
-        
-        <h5 class="card-title">2. Processing Options</h5>
-        <div class="card mb-4">
-        <div class="card-body">
-        <h5 class="card-title">AI Assistant</h5>
-        <textarea
-        id="input-ai-prompt"
-        class="form-control mb-2"
-        rows="2"
-        placeholder="e.g. Add background music at 0.2, then captions at size 28"
-        ></textarea>
-        <div class="d-flex align-items-center">
-        <button
-                id="btn-ai-edit"
-                class="btn btn-info d-flex align-items-center"
-                onclick="runAiEdit()"
-            >
-                <span>Run AI Chat</span>
-                
-                <span class="visually-hidden">Loading…</span>
-                </span>
-            </button>
-            </div>
-        </div>
-
-            <!-- REMOVE DUPLICATES -->
-            <div class="mb-3 d-flex align-items-center" id="group-remove-duplicates">
-                <input 
-                    type="number" 
-                    id="dupThreshInput"
-                    class="form-control me-2"
-                    min="0.01"
-                    max="0.99"
-                    step="0.01"
-                    value="0.85"
-                    style="width: 80px;"
-                    title="Similarity threshold (0.01-0.99)"
-                >
-
-            <button
-                id="btn-remove-duplicates"
-                class="btn btn-primary d-flex align-items-center"
-                onclick="runRemoveDuplicates()"
-            >
-                <span>Remove Duplicates</span>
-                <span
-                id="spinner-remove-duplicates"
-                class="spinner-border spinner-border-sm text-light ms-2"
-                role="status"
-                style="display: none;"
-                >
-                <span class="visually-hidden">Loading…</span>
-                </span>
-            </button>
-            <button
-                id="reload-remove-duplicates"
-                class="btn btn-secondary ms-2"
-                style="display: none;"
-                onclick="reloadVideo()"
-            >
-                Reload
-            </button>
-            <button
-                id="play-remove-duplicates"
-                class="btn btn-success ms-2"
-                style="display: none;"
-                onclick="playVideo()"
-            >
-                Play
-            </button>
-            </div>
-
-            <!-- ADD CAPTIONS -->
-            <div class="mb-3" id="group-add-captions">
-            <h6>Add Captions</h6>
-            <input
-                type="number"
-                id="input-font-size"
-                placeholder="Font Size"
-                class="form-control mb-2"
-            />
-
-            <div class="d-flex align-items-center">
-                <button
-                id="btn-add-captions"
-                class="btn btn-secondary d-flex align-items-center"
-                onclick="addCaptions()"
-                >
-                <span>Add Captions</span>
-                <span
-                    id="spinner-add-captions"
-                    class="spinner-border spinner-border-sm text-light ms-2"
-                    role="status"
-                    style="display: none;"
-                >
-                    <span class="visually-hidden">Loading…</span>
-                </span>
-                </button>
-                <button
-                id="reload-add-captions"
-                class="btn btn-secondary ms-2"
-                style="display: none;"
-                onclick="reloadVideo()"
-                >
-                Reload
-                </button>
-                <button
-                id="play-add-captions"
-                class="btn btn-success ms-2"
-                style="display: none;"
-                onclick="playVideo()"
-                >
-                Play
-                </button>
-            </div>
-            </div>
-
-            <!-- ADD BACKGROUND MUSIC -->
-            <div class="mb-3" id="group-add-music">
-            <h6>Add Background Music</h6>
-            <input
-                type="file"
-                id="input-music-file"
-                accept="audio/mpeg"
-                data-file-type="music"
-                class="form-control mb-3"
-            />
-            <div class="d-flex align-items-center gap-3">
-                <i class="bi bi-volume-down fs-5 text-muted"></i>
-                <input
-                    type="range"
-                    id="input-music-volume"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value="0.3"
-                    class="form-range custom-slider"
-                    style="width: 200px;"
-                />
-                <i class="bi bi-volume-up fs-5 text-muted"></i>
-                <span id="volume-value" class="text-muted ms-2">30%</span>
-            </div>
-
-
-            <div class="d-flex align-items-center">
-                <button
-                id="btn-add-music"
-                class="btn btn-secondary d-flex align-items-center"
-                onclick="addMusic()"
-                >
-                <span>Add Music</span>
-                <span
-                    id="spinner-add-music"
-                    class="spinner-border spinner-border-sm text-light ms-2"
-                    role="status"
-                    style="display: none;"
-                >
-                    <span class="visually-hidden">Loading…</span>
-                </span>
-                </button>
-                <button
-                id="reload-add-music"
-                class="btn btn-secondary ms-2"
-                style="display: none;"
-                onclick="reloadVideo()"
-                >
-                Reload
-                </button>
-                <button
-                id="play-add-music"
-                class="btn btn-success ms-2"
-                style="display: none;"
-                onclick="playVideo()"
-                >
-                Play
-                </button>
-            </div>
-            </div>
-
-            <!-- ADD B-ROLL -->
-            <div class="mb-3" id="group-add-broll">
-            <h6>Add B‑roll Clips</h6>
-            <input
-                type="text"
-                id="input-broll-keywords"
-                placeholder="Keywords (comma separated)"
-                class="form-control mb-2"
-            />
-
-            <div class="d-flex align-items-center">
-                <button
-                id="btn-add-broll"
-                class="btn btn-secondary d-flex align-items-center"
-                onclick="addBroll()"
-                >
-                <span>Add B‑roll</span>
-                <span
-                    id="spinner-add-broll"
-                    class="spinner-border spinner-border-sm text-light ms-2"
-                    role="status"
-                    style="display: none;"
-                >
-                    <span class="visually-hidden">Loading…</span>
-                </span>
-                </button>
-                <button
-                id="reload-add-broll"
-                class="btn btn-secondary ms-2"
-                style="display: none;"
-                onclick="reloadVideo()"
-                >
-                Reload
-                </button>
-                <button
-                id="play-add-broll"
-                class="btn btn-success ms-2"
-                style="display: none;"
-                onclick="playVideo()"
-                >
-                Play
-                </button>
-            </div>
-            </div>
-
-            <!-- OUTPUT -->
-            <div id="outputSection" class="mt-4"></div>
-        </div>
-        </div>
-
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Main JS -->
     <script src="/static/main.js"></script>
-    <script>
-    // Add real-time volume display
-    document.getElementById('input-music-volume').addEventListener('input', function(e) {
-        document.getElementById('volume-value').textContent = 
-            `${Math.round(e.target.value * 100)}%`;
-    });
-    </script>
-
 </body>
 </html>

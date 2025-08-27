@@ -163,7 +163,7 @@ async def execute_workflow(graph, state, processor):
 
     processor.active_tasks[state["task_id"]] = {
         "status": "completed",
-        "status" : "processing complete"
+        "message": "processing complete"
     }
 
     # except Exception as e:
