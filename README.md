@@ -31,7 +31,7 @@ Supports actions such as removing duplicates, adding captions, and overlaying mu
 ## Getting Started
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.11+
 - FFmpeg installed on your system
 - Required Python packages (see requirements.txt)
 
@@ -52,8 +52,8 @@ pip install -r requirements.txt
     Create a `.env` file in the project root with your API keys:
     ```
     API_KEY=your_actual_api_key_here
-    BASE_URL=https://api.deepseek.com
-    MODEL_NAME=deepseek-chat
+    BASE_URL=your_base_url_here
+    MODEL_NAME=your_model_name_here
     ```
     
     **Note:** Never commit your `.env` file to version control. The `.gitignore` file is configured to exclude it.
@@ -65,7 +65,7 @@ python app/main.py
 
 5. Open your browser and navigate to `http://localhost:8000`
 
-## 📱 UI Features
+## UI Features
 
 ### Upload Interface
 - **Drag & Drop Zone**: Large, visually appealing upload area
@@ -84,7 +84,7 @@ python app/main.py
 - **Download Buttons**: Easy access to processed videos
 - **Step Completion**: Visual confirmation of processing steps
 
-## 🎯 Usage
+## Usage
 
 ### Basic Workflow
 1. **Upload**: Drag and drop or click to upload your video file
@@ -103,7 +103,7 @@ python app/main.py
 - **Add Music**: Upload audio file and adjust volume (0-100%)
 - **Add B-roll**: Enter keywords separated by commas
 
-## 🛠 Technical Details
+## Technical Details
 
 ### Frontend
 - **Bootstrap 5**: Modern CSS framework
@@ -125,74 +125,12 @@ python app/main.py
 - **Shadows**: Subtle depth with CSS box-shadows
 - **Animations**: Smooth transitions and hover effects
 
-## 🎨 UI Components
 
-### Upload Zone
-- Dashed border with hover effects
-- Cloud upload icon
-- Clear call-to-action button
-- Drag and drop visual feedback
-
-### Feature Cards
-- Gradient icon backgrounds
-- Hover animations
-- Consistent spacing and typography
-- Clear feature descriptions
-
-### Processing Overlay
-- Backdrop blur effect
-- Animated progress ring
-- Professional loading messages
-- Non-blocking user experience
-
-### Alerts and Notifications
-- Icon-based message types
-- Dismissible alerts
-- Consistent styling
-- Clear action buttons
-
-## 🔧 Customization
-
-### Colors
-The application uses CSS custom properties for easy theming:
-```css
-:root {
-    --primary-color: #6366f1;
-    --primary-dark: #4f46e5;
-    --accent-color: #06b6d4;
-    /* ... more variables */
-}
-```
-
-### Styling
-- All components use consistent border-radius (12px-20px)
-- Smooth transitions (0.3s ease)
-- Professional shadows and gradients
-- Mobile-responsive breakpoints
-
-## 📱 Mobile Experience
-- Touch-friendly interface
-- Responsive grid layout
-- Optimized button sizes
-- Simplified navigation
-
-## 🚀 Performance
-- Lazy loading of video previews
-- Efficient file upload handling
-- Optimized CSS animations
-- Minimal JavaScript footprint
-
-## 🤝 Contributing
+## Contributing
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
 
-## 📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-**VideoFlow Pro** - Transform your videos with AI-powered editing in a beautiful, professional interface.
 
