@@ -1,10 +1,12 @@
 from app.config import Settings
 from app.graph import create_workflow
 from app.services.video_processor import VideoProcessor
+import os
 
 
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    return settings
 
 video_processor = None
 
