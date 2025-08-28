@@ -5,7 +5,7 @@ Supports actions such as removing duplicates, adding captions, and overlaying mu
 
 ---
 
-<!-- [![Watch the video](https://img.youtube.com/vi/0Re9DLinMQc/hqdefault.jpg)](https://www.youtube.com/embed/0Re9DLinMQc) -->
+[![Watch the video](https://img.youtube.com/vi/Fj48zjKgRYo/hqdefault.jpg)](https://www.youtube.com/embed/Fj48zjKgRYo)
 
 
 ## Features
